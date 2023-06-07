@@ -1,27 +1,28 @@
 package com.minidooray.accountapi.request;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 
+import javax.persistence.PrePersist;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-@AllArgsConstructor
-@Getter
-@NoArgsConstructor
+@Data
 @ToString
 public class RequestAccountDto {
-    private Long accountSeq;
     private String accountId;
     private String password;
     private String name;
     private String email;
     private String phoneNumber;
-    private LocalDateTime lastAccessDate;
-    @Min(1)
+    private LocalDate lastAccessDate;
     @Max(3)
     private Integer status = 1;
+
+
+    @PrePersist
+    public void onAccess(){
+        lastAccessDate= LocalDate.now();
+    }
 }

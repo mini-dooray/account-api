@@ -22,7 +22,7 @@ public class QAccountStatus extends EntityPathBase<AccountStatus> {
 
     public static final QAccountStatus accountStatus = new QAccountStatus("accountStatus");
 
-    public final DateTimePath<java.time.LocalDateTime> accessDate = createDateTime("accessDate", java.time.LocalDateTime.class);
+    public final DatePath<java.time.LocalDate> accessDate = createDate("accessDate", java.time.LocalDate.class);
 
     public final QAccount account;
 

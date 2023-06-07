@@ -2,6 +2,7 @@ package com.minidooray.accountapi.response;
 
 import lombok.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Getter
@@ -17,7 +18,7 @@ public class ResponseAccountDto {
     private String name;
     private String email;
     private String phoneNumber;
-    private LocalDateTime lastAccessDate;
+    private LocalDate lastAccessDate;
     private Integer status;
 }
 

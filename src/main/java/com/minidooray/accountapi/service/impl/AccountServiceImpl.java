@@ -2,6 +2,8 @@ package com.minidooray.accountapi.service.impl;
 
 import com.minidooray.accountapi.entity.*;
 import com.minidooray.accountapi.repository.AccountRepository;
+import com.minidooray.accountapi.repository.AccountStatusRepository;
+import com.minidooray.accountapi.repository.AdditionalInfoRepository;
 import com.minidooray.accountapi.request.RequestAccountDto;
 import com.minidooray.accountapi.response.ResponseAccountDto;
 import com.minidooray.accountapi.service.AccountService;
@@ -12,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -21,26 +24,26 @@ public class AccountServiceImpl extends QuerydslRepositorySupport implements Acc
 
 
     private final AccountRepository accountRepository;
+    private final AccountStatusRepository accountStatusRepository;
+    private final AdditionalInfoRepository additionalInfoRepository;
     private final EntityManager entityManager;
 
 
     private final QAccount account = QAccount.account;
     private final QAdditionalInfo additionalInfo = QAdditionalInfo.additionalInfo;
 
-    public AccountServiceImpl(AccountRepository accountRepository, EntityManager entityManager) {
+    public AccountServiceImpl(AccountRepository accountRepository, AccountStatusRepository accountStatusRepository, AdditionalInfoRepository additionalInfoRepository, EntityManager entityManager) {
         super(Account.class);
         this.accountRepository = accountRepository;
+        this.accountStatusRepository = accountStatusRepository;
+        this.additionalInfoRepository = additionalInfoRepository;
         this.entityManager = entityManager;
     }
-
-
-
 
     @Override
     public ResponseAccountDto getAccount(Long seq) {
         Account account = accountRepository.findById(seq)
                 .orElse(null);
-
 
 
         return ResponseAccountDto.builder()
@@ -79,44 +82,36 @@ public class AccountServiceImpl extends QuerydslRepositorySupport implements Acc
     }
 
     public ResponseAccountDto register(RequestAccountDto request) {
-
         Account account = new Account();
-        account.setId(request.getAccountId());
-        account.setPassword(request.getPassword());
-        account.setName(request.getName());
-
-        AdditionalInfo additionalInfo = new AdditionalInfo();
-        additionalInfo.setEmail(request.getEmail());
-        additionalInfo.setPhoneNumber(request.getPhoneNumber());
-        additionalInfo.setAccount(account);
-        account.setAdditionalInfo(additionalInfo);
-
-        AccountStatus accountStatus = new AccountStatus();
-        accountStatus.setStatus(request.getStatus());
-        accountStatus.setAccount(account);
-        account.setAccountStatus(accountStatus);
-
+        AccountStatus status = new AccountStatus();
+        AdditionalInfo info = new AdditionalInfo();
+        account.setAccount(request.getAccountId(), request.getPassword(), request.getName());
         Account savedAccount = accountRepository.saveAndFlush(account);
+        status.setAccountStatus(request.getLastAccessDate());
+        status.setAccount(account);
+        info.setAdditionalInfo(request.getEmail(), request.getPhoneNumber());
+        info.setAccount(account);
+        accountStatusRepository.save(status);
+        additionalInfoRepository.save(info);
+        account.setData(status, info);
+
 
         return ResponseAccountDto.builder()
                 .accountSeq(savedAccount.getSeq())
                 .accountId(savedAccount.getId())
-                .password(savedAccount.getPassword())
                 .name(savedAccount.getName())
+                .password(savedAccount.getPassword())
                 .email(savedAccount.getAdditionalInfo().getEmail())
                 .phoneNumber(savedAccount.getAdditionalInfo().getPhoneNumber())
                 .status(savedAccount.getAccountStatus().getStatus())
-                .lastAccessDate(savedAccount.getAccountStatus().getAccessDate())
                 .build();
-
     }
 
 
-    public ResponseAccountDto updateAccount(Long seq,RequestAccountDto requestAccountDto) {
+    public ResponseAccountDto updateAccount(Long seq, RequestAccountDto requestAccountDto) {
         Account account = accountRepository.findById(seq)
                 .orElse(null);
-        account.setPassword(requestAccountDto.getPassword());
-        account.setName(requestAccountDto.getName());
+        account.setAccount(requestAccountDto.getAccountId(), requestAccountDto.getPassword(), requestAccountDto.getName());
 
         accountRepository.saveAndFlush(account);
 
@@ -128,7 +123,7 @@ public class AccountServiceImpl extends QuerydslRepositorySupport implements Acc
                 .email(account.getAdditionalInfo().getEmail())
                 .phoneNumber(account.getAdditionalInfo().getPhoneNumber())
                 .status(account.getAccountStatus().getStatus())
-                .lastAccessDate(LocalDateTime.now())
+                .lastAccessDate(LocalDate.now())
                 .build();
     }
 
@@ -240,9 +235,6 @@ public class AccountServiceImpl extends QuerydslRepositorySupport implements Acc
         ResponseAccountDto account = getAccountById(id);
         return account != null && account.getPassword().equals(password);
     }
-
-
-
 
 
 }

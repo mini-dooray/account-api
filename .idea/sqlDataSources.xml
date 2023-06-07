@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DdlMappings">
+    <mapping uuid="dcecf4c9-931c-4515-b0bd-16f9ac0cef6f" name="nhn_academy_17@133.186.144.236 Mapping">
+      <data-sources db="24127f65-bf5c-45b8-9670-074efde55676" />
+      <scope>
+        <node kind="database" qname="@" />
+      </scope>
+    </mapping>
+  </component>
+</project>

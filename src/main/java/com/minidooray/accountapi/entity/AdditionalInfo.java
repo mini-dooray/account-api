@@ -17,14 +17,23 @@ public class AdditionalInfo {
     private Long seq;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @MapsId
     @JoinColumn(name = "account_seq", referencedColumnName = "account_seq")
     private Account account;
 
 
-    @Column(name = "email", length = 30, nullable = false, unique = true)
+    @Column(name = "email", nullable = false, length = 30, unique = true)
     private String email;
 
-    @Column(name = "phone_number", length = 13, nullable = false)
+    @Column(name = "phone_number", nullable = false, length = 13)
     private String phoneNumber;
+
+
+    public void setAdditionalInfo(String email, String phoneNumber){
+        this.email=email;
+        this.phoneNumber=phoneNumber;
+    }
+
+    public void setAccountByInfo(Account account){
+        this.account = account;
+    }
 }
