@@ -22,6 +22,8 @@ public class AccountServiceImpl extends QuerydslRepositorySupport implements Acc
 
     private final AccountRepository accountRepository;
     private final EntityManager entityManager;
+
+
     private final QAccount account = QAccount.account;
     private final QAdditionalInfo additionalInfo = QAdditionalInfo.additionalInfo;
 
@@ -238,5 +240,10 @@ public class AccountServiceImpl extends QuerydslRepositorySupport implements Acc
         ResponseAccountDto account = getAccountById(id);
         return account != null && account.getPassword().equals(password);
     }
+
+
+
+
+
 }
 

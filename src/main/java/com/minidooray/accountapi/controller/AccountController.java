@@ -91,4 +91,9 @@ public class AccountController {
         }
     }
 
+
+    @GetMapping("/account/account/{id}")
+    public ResponseAccountDto getAccountById(@PathVariable String id){
+        return accountService.getAccountById(id);
+    }
 }

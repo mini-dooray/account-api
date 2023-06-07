@@ -1,4 +1,3 @@
-com/minidooray/accountapi/configuration/QuerydslConfiguration.class
 com/minidooray/accountapi/entity/AccountStatus.class
 com/minidooray/accountapi/entity/AdditionalInfo.class
 com/minidooray/accountapi/controller/AccountController.class

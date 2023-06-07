@@ -17,7 +17,7 @@ Host: localhost:8003
 }
 
 ###회원탈퇴
-DELETE /account/delete/24 HTTP/1.1
+DELETE /account/delete/25 HTTP/1.1
 Content-Type: application/json
 Host: localhost:8003
 
@@ -78,3 +78,9 @@ Host: localhost:8003
   "accountId" : "test1231",
   "password" : "1234"
 }
+
+
+###아이디로 회원정보 확인
+GET /account/account/test1231 HTTP/1.1
+Content-Type: application/json
+Host: localhost:8003
