@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.EntityManager;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @Service
@@ -44,7 +45,7 @@ public class AccountServiceImpl extends QuerydslRepositorySupport implements Acc
     public ResponseAccountDto getAccount(Long seq) {
         Account account = accountRepository.findById(seq)
                 .orElse(null);
-
+        AccessTimeCalculator(account);
 
         return ResponseAccountDto.builder()
                 .accountSeq(account.getSeq())
@@ -58,16 +59,18 @@ public class AccountServiceImpl extends QuerydslRepositorySupport implements Acc
                 .build();
 
     }
-
+    //status 1 = 가입 , 2  = 탈퇴 , 3 = 휴면
     @Override
+    @Transactional
     public ResponseAccountDto deleteAccount(Long seq) {
         Account account = accountRepository.findById(seq)
                 .orElse(null);
         if (account == null) {
             throw new RuntimeException("Account not found");
         }
-
-        accountRepository.deleteById(seq);
+        AccountStatus accountStatus = account.getAccountStatus();
+        accountStatus.setStatus(2);
+        account.setAccountStatus(accountStatus);
 
         return ResponseAccountDto.builder()
                 .accountSeq(account.getSeq())
@@ -86,14 +89,15 @@ public class AccountServiceImpl extends QuerydslRepositorySupport implements Acc
         AccountStatus status = new AccountStatus();
         AdditionalInfo info = new AdditionalInfo();
         account.setAccount(request.getAccountId(), request.getPassword(), request.getName());
-        Account savedAccount = accountRepository.saveAndFlush(account);
         status.setAccountStatus(request.getLastAccessDate());
+        status.setStatus(1);
         status.setAccount(account);
         info.setAdditionalInfo(request.getEmail(), request.getPhoneNumber());
         info.setAccount(account);
+        account.setData(status, info);
+        Account savedAccount = accountRepository.saveAndFlush(account);
         accountStatusRepository.save(status);
         additionalInfoRepository.save(info);
-        account.setData(status, info);
 
 
         return ResponseAccountDto.builder()
@@ -157,12 +161,14 @@ public class AccountServiceImpl extends QuerydslRepositorySupport implements Acc
         QAccount account = QAccount.account;
         QAdditionalInfo additionalInfo = QAdditionalInfo.additionalInfo;
 
+
         Account result = new JPAQuery<>(entityManager)
                 .select(account)
                 .from(account)
                 .join(account.additionalInfo, additionalInfo)
                 .where(additionalInfo.email.eq(email))
                 .fetchOne();
+        AccessTimeCalculator(result);
 
         if (result == null) {
             throw new RuntimeException("Account not found");
@@ -221,6 +227,7 @@ public class AccountServiceImpl extends QuerydslRepositorySupport implements Acc
                 .from(account)
                 .where(account.id.eq(id))
                 .fetchOne();
+        AccessTimeCalculator(result);
 
         if (result == null) {
             throw new RuntimeException("Account not found");
@@ -230,12 +237,45 @@ public class AccountServiceImpl extends QuerydslRepositorySupport implements Acc
     }
 
 
-    @Override
+    @Transactional
     public boolean existLoginAccount(String id, String password) {
         ResponseAccountDto account = getAccountById(id);
+        setAccess(id,password);
         return account != null && account.getPassword().equals(password);
     }
 
+    // 해당 id와 password 를 가지고 있는 계정에 대한 접속일자 수정 메소드
+    @Transactional(readOnly = true)
+    public void setAccess(String id,String password){
+
+
+        QAccount account = QAccount.account;
+        Account result = new JPAQuery<>(entityManager)
+                .select(account)
+                .from(account)
+                .where(account.id.eq(id).and(account.password.eq(password)))
+                .fetchOne();
+
+        AccountStatus status = result.getAccountStatus();
+        status.setAccessDate(LocalDate.now());
+        if(result!=null) {
+            result.setAccountStatus(status);
+            accountRepository.save(result);
+        }
+    }
+    //마지막 접속일자와 최근 접속일자를 계산하여 휴면계정 전환(3)
+    public void AccessTimeCalculator(Account account){
+        LocalDate lastAccessDate = account.getAccountStatus().getAccessDate();
+        LocalDate currentDate = LocalDate.now();
+        AccountStatus status = account.getAccountStatus();
+
+        long daysDifference = ChronoUnit.DAYS.between(lastAccessDate, currentDate);
+
+        if(daysDifference>=365){
+            status.setStatus(3);
+            account.setAccountStatus(status);
+        }
+    }
 
 }
 

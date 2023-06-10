@@ -34,8 +34,8 @@ public class AccountController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-
-    @DeleteMapping(value = "/account/delete/{seq}", produces = MediaType.APPLICATION_JSON_VALUE)
+    //status ={1 :가입 / 2: 탈퇴 / 3: 휴면}
+    @PostMapping(value = "/account/delete/{seq}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     @ResponseStatus(HttpStatus.OK)
     public ResponseAccountDto deleteAccount(@PathVariable Long seq) {
@@ -90,6 +90,7 @@ public class AccountController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 실패");
         }
     }
+
 
 
     @GetMapping("/account/account/{id}")

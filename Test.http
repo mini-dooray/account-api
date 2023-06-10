@@ -1,5 +1,5 @@
 ###회원정보
-GET /account/12 HTTP/1.1
+GET /account/69 HTTP/1.1
 Host: localhost:8003
 
 
@@ -9,61 +9,61 @@ Content-Type: application/json
 Host: localhost:8003
 
 {
-  "accountId" : "test1231",
+  "accountId" : "TSet123",
   "password" : "1234",
   "name" : "TestUser",
-  "email" : "Testt1@Test.com",
+  "email" : "Testt53@Test.com",
   "phoneNumber" : "010-0000-0000"
 }
 
 ###회원탈퇴
-DELETE /account/delete/12 HTTP/1.1
+POST /account/delete/69 HTTP/1.1
 Content-Type: application/json
 Host: localhost:8003
 
 
 ###회원정보수정
-PUT /account/update/13 HTTP/1.1
+PUT /account/update/68 HTTP/1.1
 Content-Type: application/json
 Host: localhost:8003
 
 {
-  "accountId" : "test1231",
+  "accountId" : "TSet123",
   "password" : "123456",
   "name" : "TestUser12",
-  "email" : "Test33@Test.com",
+  "email" : "Test50@Test.com",
   "phoneNumber" : "010-0000-0000",
   "status" : 1
 }
 
 ### 아이디 획득
-GET /account/user/13 HTTP/1.1
+GET /account/user/68 HTTP/1.1
 Content-Type: application/json
 Host: localhost:8003
 
 ### Password 획득
-GET /account/pwd/13 HTTP/1.1
+GET /account/pwd/68 HTTP/1.1
 Content-Type: application/json
 Host: localhost:8003
 
 ### 이메일 획득
-GET /account/email/13 HTTP/1.1
+GET /account/email/68 HTTP/1.1
 Content-Type: application/json
 Host: localhost:8003
 
 ### 이메일로 회원정보 획득
-GET /account/Test45@Test.com/found HTTP/1.1
+GET /account/Testt50@Test.com/found HTTP/1.1
 Content-Type: application/json
 Host: localhost:8003
 
 ### 이메일 존재여부 확인
-GET /account/find/email/Test79@Test.com HTTP/1.1
+GET /account/find/email/Testt50@Test.com HTTP/1.1
 Content-Type: application/json
 Host: localhost:8003
 
 
 ###아이디 존재여부 확인
-GET /account/find/id/test1231 HTTP/1.1
+GET /account/find/id/TSet123 HTTP/1.1
 Content-Type: application/json
 Host: localhost:8003
 
@@ -75,12 +75,12 @@ Content-Type: application/json
 Host: localhost:8003
 
 {
-  "accountId" : "test1231",
-  "password" : "1234"
+  "accountId" : "TSet123",
+  "password" : "123456"
 }
 
 
 ###아이디로 회원정보 확인
-GET /account/account/test1231 HTTP/1.1
+GET /account/account/TSet123 HTTP/1.1
 Content-Type: application/json
 Host: localhost:8003
