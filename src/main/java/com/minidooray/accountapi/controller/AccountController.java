@@ -1,7 +1,5 @@
 package com.minidooray.accountapi.controller;
 
-
-import com.minidooray.accountapi.entity.Account;
 import com.minidooray.accountapi.request.RequestAccountDto;
 import com.minidooray.accountapi.response.ResponseAccountDto;
 import com.minidooray.accountapi.service.AccountService;
@@ -10,7 +8,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 
 @RestController
 public class AccountController {
@@ -33,8 +30,6 @@ public class AccountController {
 
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
-
-    //status ={1 :가입 / 2: 탈퇴 / 3: 휴면}
     @PostMapping(value = "/account/delete/{seq}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     @ResponseStatus(HttpStatus.OK)

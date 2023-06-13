@@ -12,7 +12,7 @@ Host: localhost:8003
   "accountId" : "TSet123",
   "password" : "1234",
   "name" : "TestUser",
-  "email" : "Testt53@Test.com",
+  "email" : "Testt54@Test.com",
   "phoneNumber" : "010-0000-0000"
 }
 
@@ -31,7 +31,7 @@ Host: localhost:8003
   "accountId" : "TSet123",
   "password" : "123456",
   "name" : "TestUser12",
-  "email" : "Test50@Test.com",
+  "email" : "Test54@Test.com",
   "phoneNumber" : "010-0000-0000",
   "status" : 1
 }

@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.minidooray.accountapi.entity.Account;
 import com.minidooray.accountapi.entity.AccountStatus;
 import com.minidooray.accountapi.entity.AdditionalInfo;
-import com.minidooray.accountapi.repository.AccountRepository;
 import com.minidooray.accountapi.request.RequestAccountDto;
 import com.minidooray.accountapi.response.ResponseAccountDto;
 import com.minidooray.accountapi.service.AccountService;
@@ -33,7 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-public class AccountControllerTest {
+class AccountControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -105,7 +104,7 @@ public class AccountControllerTest {
         verify(accountService, times(1)).deleteAccount(seq);
     }
     @Test
-    public void testUpdateAccount() throws Exception {
+    void testUpdateAccount() throws Exception {
         // 요청 본문
         RequestAccountDto requestDto = createMockRequestAccountDto();
 

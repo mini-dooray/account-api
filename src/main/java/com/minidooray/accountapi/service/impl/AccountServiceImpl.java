@@ -89,7 +89,8 @@ public class AccountServiceImpl extends QuerydslRepositorySupport implements Acc
         AccountStatus status = new AccountStatus();
         AdditionalInfo info = new AdditionalInfo();
         account.setAccount(request.getAccountId(), request.getPassword(), request.getName());
-        status.setAccountStatus(request.getLastAccessDate());
+        status.setAccessDate(LocalDate.now());
+        status.setAccountStatus(LocalDate.now());
         status.setStatus(1);
         status.setAccount(account);
         info.setAdditionalInfo(request.getEmail(), request.getPhoneNumber());
