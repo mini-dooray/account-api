@@ -1,5 +1,5 @@
 ###회원정보
-GET /account/69 HTTP/1.1
+GET /account/80 HTTP/1.1
 Host: localhost:8003
 
 
@@ -12,7 +12,7 @@ Host: localhost:8003
   "accountId" : "TSet123",
   "password" : "1234",
   "name" : "TestUser",
-  "email" : "Testt54@Test.com",
+  "email" : "Testt55@Test.com",
   "phoneNumber" : "010-0000-0000"
 }
 
@@ -23,15 +23,15 @@ Host: localhost:8003
 
 
 ###회원정보수정
-PUT /account/update/68 HTTP/1.1
+PUT /account/update/80 HTTP/1.1
 Content-Type: application/json
 Host: localhost:8003
 
 {
-  "accountId" : "TSet123",
+  "accountId" : "TSe123",
   "password" : "123456",
   "name" : "TestUser12",
-  "email" : "Test54@Test.com",
+  "email" : "Test55@Test.com",
   "phoneNumber" : "010-0000-0000",
   "status" : 1
 }
@@ -52,7 +52,7 @@ Content-Type: application/json
 Host: localhost:8003
 
 ### 이메일로 회원정보 획득
-GET /account/Testt50@Test.com/found HTTP/1.1
+GET /account/Testt55@Test.com/found HTTP/1.1
 Content-Type: application/json
 Host: localhost:8003
 
@@ -81,6 +81,13 @@ Host: localhost:8003
 
 
 ###아이디로 회원정보 확인
-GET /account/account/TSet123 HTTP/1.1
+GET /account/account/TSe123 HTTP/1.1
+Content-Type: application/json
+Host: localhost:8003
+
+
+
+###Seq로 접속일자 업데이트
+PUT /account/date/?seq=1
 Content-Type: application/json
 Host: localhost:8003

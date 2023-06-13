@@ -1,5 +1,6 @@
 package com.minidooray.accountapi.controller;
 
+import com.minidooray.accountapi.entity.Account;
 import com.minidooray.accountapi.request.RequestAccountDto;
 import com.minidooray.accountapi.response.ResponseAccountDto;
 import com.minidooray.accountapi.service.AccountService;
@@ -7,6 +8,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
 
 
 @RestController
@@ -91,5 +94,11 @@ public class AccountController {
     @GetMapping("/account/account/{id}")
     public ResponseAccountDto getAccountById(@PathVariable String id){
         return accountService.getAccountById(id);
+    }
+
+    @PutMapping("/account/date/")
+    public ResponseEntity<Account> updateDate(@RequestParam Long seq){
+        accountService.updateAccessDate(seq);
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
 }

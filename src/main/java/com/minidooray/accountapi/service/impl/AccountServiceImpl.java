@@ -7,7 +7,6 @@ import com.minidooray.accountapi.repository.AdditionalInfoRepository;
 import com.minidooray.accountapi.request.RequestAccountDto;
 import com.minidooray.accountapi.response.ResponseAccountDto;
 import com.minidooray.accountapi.service.AccountService;
-import com.querydsl.jpa.JPQLQuery;
 import com.querydsl.jpa.impl.JPAQuery;
 import org.springframework.data.jpa.repository.support.QuerydslRepositorySupport;
 import org.springframework.stereotype.Service;
@@ -15,9 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
 
 @Service
 @Transactional
@@ -29,9 +26,6 @@ public class AccountServiceImpl extends QuerydslRepositorySupport implements Acc
     private final AdditionalInfoRepository additionalInfoRepository;
     private final EntityManager entityManager;
 
-
-    private final QAccount account = QAccount.account;
-    private final QAdditionalInfo additionalInfo = QAdditionalInfo.additionalInfo;
 
     public AccountServiceImpl(AccountRepository accountRepository, AccountStatusRepository accountStatusRepository, AdditionalInfoRepository additionalInfoRepository, EntityManager entityManager) {
         super(Account.class);
@@ -45,7 +39,7 @@ public class AccountServiceImpl extends QuerydslRepositorySupport implements Acc
     public ResponseAccountDto getAccount(Long seq) {
         Account account = accountRepository.findById(seq)
                 .orElse(null);
-        AccessTimeCalculator(account);
+        accessTimeCalculator(account);
 
         return ResponseAccountDto.builder()
                 .accountSeq(account.getSeq())
@@ -116,66 +110,65 @@ public class AccountServiceImpl extends QuerydslRepositorySupport implements Acc
     public ResponseAccountDto updateAccount(Long seq, RequestAccountDto requestAccountDto) {
         Account account = accountRepository.findById(seq)
                 .orElse(null);
-        account.setAccount(requestAccountDto.getAccountId(), requestAccountDto.getPassword(), requestAccountDto.getName());
 
-        accountRepository.saveAndFlush(account);
+        if(account!=null){
+            account.setAccount(requestAccountDto.getAccountId(), requestAccountDto.getPassword(), requestAccountDto.getName());
 
-        return ResponseAccountDto.builder()
-                .accountSeq(account.getSeq())
-                .accountId(account.getId())
-                .password(account.getPassword())
-                .name(account.getName())
-                .email(account.getAdditionalInfo().getEmail())
-                .phoneNumber(account.getAdditionalInfo().getPhoneNumber())
-                .status(account.getAccountStatus().getStatus())
-                .lastAccessDate(LocalDate.now())
-                .build();
+            accountRepository.saveAndFlush(account);
+
+            return ResponseAccountDto.builder()
+                    .accountSeq(account.getSeq())
+                    .accountId(account.getId())
+                    .password(account.getPassword())
+                    .name(account.getName())
+                    .email(account.getAdditionalInfo().getEmail())
+                    .phoneNumber(account.getAdditionalInfo().getPhoneNumber())
+                    .status(account.getAccountStatus().getStatus())
+                    .lastAccessDate(LocalDate.now())
+                    .build();
+        }
+        else return null;
     }
 
     @Override
     public String getAccountId(Long seq) {
-        ResponseAccountDto responseAccountDto = new ResponseAccountDto();
-        responseAccountDto = getAccount(seq);
-
+        ResponseAccountDto responseAccountDto = getAccount(seq);
 
         return responseAccountDto.getAccountId();
     }
 
     @Override
     public String getPassword(Long seq) {
-        ResponseAccountDto responseAccountDto = new ResponseAccountDto();
-        responseAccountDto = getAccount(seq);
+        ResponseAccountDto responseAccountDto = getAccount(seq);
 
         return responseAccountDto.getPassword();
     }
 
     @Override
     public String getEmail(Long seq) {
-        ResponseAccountDto responseAccountDto = new ResponseAccountDto();
-        responseAccountDto = getAccount(seq);
+        ResponseAccountDto responseAccountDto = getAccount(seq);
 
         return responseAccountDto.getEmail();
     }
 
     @Override
     public ResponseAccountDto getAccountByEmail(String email) {
-        QAccount account = QAccount.account;
-        QAdditionalInfo additionalInfo = QAdditionalInfo.additionalInfo;
-
+        QAccount qAccount = QAccount.account;
+        QAdditionalInfo qAdditionalInfo = QAdditionalInfo.additionalInfo;
 
         Account result = new JPAQuery<>(entityManager)
-                .select(account)
-                .from(account)
-                .join(account.additionalInfo, additionalInfo)
-                .where(additionalInfo.email.eq(email))
+                .select(qAccount)
+                .from(qAccount)
+                .join(qAccount.additionalInfo, qAdditionalInfo)
+                .where(qAdditionalInfo.email.eq(email))
                 .fetchOne();
-        AccessTimeCalculator(result);
 
-        if (result == null) {
-            throw new RuntimeException("Account not found");
+        if(result!=null) {
+            accessTimeCalculator(result);
+
+            return convertToResponseAccountDto(result);
         }
-
-        return convertToResponseAccountDto(result);
+        else return null;
     }
 
     private ResponseAccountDto convertToResponseAccountDto(Account account) {
@@ -208,12 +201,12 @@ public class AccountServiceImpl extends QuerydslRepositorySupport implements Acc
 
     @Override
     public boolean existId(String id) {
-        QAccount account = QAccount.account;
+        QAccount qAccount = QAccount.account;
 
         Long count = new JPAQuery<>(entityManager)
-                .select(account.count())
-                .from(account)
-                .where(account.id.eq(id))
+                .select(qAccount.count())
+                .from(qAccount)
+                .where(qAccount.id.eq(id))
                 .fetchOne();
 
         return count != null && count > 0;
@@ -221,28 +214,26 @@ public class AccountServiceImpl extends QuerydslRepositorySupport implements Acc
 
     @Override
     public ResponseAccountDto getAccountById(String id) {
-        QAccount account = QAccount.account;
+        QAccount qAccount = QAccount.account;
 
         Account result = new JPAQuery<>(entityManager)
-                .select(account)
-                .from(account)
-                .where(account.id.eq(id))
+                .select(qAccount)
+                .from(qAccount)
+                .where(qAccount.id.eq(id))
                 .fetchOne();
-        AccessTimeCalculator(result);
-
-        if (result == null) {
-            throw new RuntimeException("Account not found");
+        if(result!=null) {
+            accessTimeCalculator(result);
+            return convertToResponseAccountDto(result);
         }
-
-        return convertToResponseAccountDto(result);
+        else return null;
     }
 
 
     @Transactional
     public boolean existLoginAccount(String id, String password) {
-        ResponseAccountDto account = getAccountById(id);
+        ResponseAccountDto dto = getAccountById(id);
         setAccess(id,password);
-        return account != null && account.getPassword().equals(password);
+        return dto != null && dto.getPassword().equals(password);
     }
 
     // 해당 id와 password 를 가지고 있는 계정에 대한 접속일자 수정 메소드
@@ -250,22 +241,22 @@ public class AccountServiceImpl extends QuerydslRepositorySupport implements Acc
     public void setAccess(String id,String password){
 
 
-        QAccount account = QAccount.account;
+        QAccount qAccount = QAccount.account;
         Account result = new JPAQuery<>(entityManager)
-                .select(account)
-                .from(account)
-                .where(account.id.eq(id).and(account.password.eq(password)))
+                .select(qAccount)
+                .from(qAccount)
+                .where(qAccount.id.eq(id).and(qAccount.password.eq(password)))
                 .fetchOne();
 
+        if(result!=null) {
         AccountStatus status = result.getAccountStatus();
         status.setAccessDate(LocalDate.now());
-        if(result!=null) {
             result.setAccountStatus(status);
             accountRepository.save(result);
         }
     }
     //마지막 접속일자와 최근 접속일자를 계산하여 휴면계정 전환(3)
-    public void AccessTimeCalculator(Account account){
+    public void accessTimeCalculator(Account account){
         LocalDate lastAccessDate = account.getAccountStatus().getAccessDate();
         LocalDate currentDate = LocalDate.now();
         AccountStatus status = account.getAccountStatus();
@@ -276,6 +267,29 @@ public class AccountServiceImpl extends QuerydslRepositorySupport implements Acc
             status.setStatus(3);
             account.setAccountStatus(status);
         }
+    }
+
+    public ResponseAccountDto updateAccessDate(Long seq) {
+        Account account = accountRepository.findById(seq)
+                .orElse(null);
+
+        AccountStatus status = account.getAccountStatus();
+        status.setAccessDate(LocalDate.now());
+        if (account != null) {
+            account.setAccountStatus(status);
+            accountRepository.saveAndFlush(account);
+
+            return ResponseAccountDto.builder()
+                    .accountSeq(account.getSeq())
+                    .accountId(account.getId())
+                    .password(account.getPassword())
+                    .name(account.getName())
+                    .email(account.getAdditionalInfo().getEmail())
+                    .phoneNumber(account.getAdditionalInfo().getPhoneNumber())
+                    .status(account.getAccountStatus().getStatus())
+                    .lastAccessDate(LocalDate.now())
+                    .build();
+        } else return null;
     }
 
 }
