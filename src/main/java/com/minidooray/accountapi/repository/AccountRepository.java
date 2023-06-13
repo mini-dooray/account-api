@@ -1,9 +1,7 @@
 package com.minidooray.accountapi.repository;
 
 import com.minidooray.accountapi.entity.Account;
-import com.minidooray.accountapi.entity.AdditionalInfo;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.support.QuerydslRepositorySupport;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;

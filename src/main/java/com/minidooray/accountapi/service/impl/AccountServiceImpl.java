@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 
@@ -27,12 +28,12 @@ public class AccountServiceImpl extends QuerydslRepositorySupport implements Acc
     private final EntityManager entityManager;
 
 
-    public AccountServiceImpl(AccountRepository accountRepository, AccountStatusRepository accountStatusRepository, AdditionalInfoRepository additionalInfoRepository, EntityManager entityManager) {
+    public AccountServiceImpl(AccountRepository accountRepository, AccountStatusRepository accountStatusRepository, AdditionalInfoRepository additionalInfoRepository, EntityManagerFactory entityManagerFactory) {
         super(Account.class);
         this.accountRepository = accountRepository;
         this.accountStatusRepository = accountStatusRepository;
         this.additionalInfoRepository = additionalInfoRepository;
-        this.entityManager = entityManager;
+        this.entityManager = entityManagerFactory.createEntityManager();
     }
 
     @Override
@@ -156,32 +157,42 @@ public class AccountServiceImpl extends QuerydslRepositorySupport implements Acc
         QAccount qAccount = QAccount.account;
         QAdditionalInfo qAdditionalInfo = QAdditionalInfo.additionalInfo;
 
-        Account result = new JPAQuery<>(entityManager)
-                .select(qAccount)
+        JPAQuery<Account> query = new JPAQuery<>(entityManager).select(qAccount)
                 .from(qAccount)
                 .join(qAccount.additionalInfo, qAdditionalInfo)
-                .where(qAdditionalInfo.email.eq(email))
-                .fetchOne();
+                .where(qAdditionalInfo.email.eq(email));
 
-        if(result!=null) {
+        Account result = query.fetchOne();
+
+        if (result != null) {
             accessTimeCalculator(result);
-
             return convertToResponseAccountDto(result);
+        } else {
+            return null;
         }
-        else return null;
     }
 
     private ResponseAccountDto convertToResponseAccountDto(Account account) {
-        return com.minidooray.accountapi.response.ResponseAccountDto.builder()
+        ResponseAccountDto dto = ResponseAccountDto.builder()
                 .accountSeq(account.getSeq())
                 .accountId(account.getId())
                 .password(account.getPassword())
                 .name(account.getName())
-                .email(account.getAdditionalInfo().getEmail())
-                .phoneNumber(account.getAdditionalInfo().getPhoneNumber())
-                .status(account.getAccountStatus().getStatus())
-                .lastAccessDate(account.getAccountStatus().getAccessDate())
                 .build();
+
+        AdditionalInfo additionalInfo = account.getAdditionalInfo();
+        if (additionalInfo != null) {
+            dto.setEmail(additionalInfo.getEmail());
+            dto.setPhoneNumber(additionalInfo.getPhoneNumber());
+        }
+
+        AccountStatus accountStatus = account.getAccountStatus();
+        if (accountStatus != null) {
+            dto.setStatus(accountStatus.getStatus());
+            dto.setLastAccessDate(accountStatus.getAccessDate());
+        }
+
+        return dto;
     }
 
     @Override
@@ -237,10 +248,8 @@ public class AccountServiceImpl extends QuerydslRepositorySupport implements Acc
     }
 
     // 해당 id와 password 를 가지고 있는 계정에 대한 접속일자 수정 메소드
-    @Transactional(readOnly = true)
-    public void setAccess(String id,String password){
-
-
+    @Transactional
+    public void setAccess(String id, String password) {
         QAccount qAccount = QAccount.account;
         Account result = new JPAQuery<>(entityManager)
                 .select(qAccount)
@@ -248,24 +257,29 @@ public class AccountServiceImpl extends QuerydslRepositorySupport implements Acc
                 .where(qAccount.id.eq(id).and(qAccount.password.eq(password)))
                 .fetchOne();
 
-        if(result!=null) {
-        AccountStatus status = result.getAccountStatus();
-        status.setAccessDate(LocalDate.now());
+        if (result != null) {
+            AccountStatus status = result.getAccountStatus();
+            status.setAccessDate(LocalDate.now());
             result.setAccountStatus(status);
             accountRepository.save(result);
         }
     }
     //마지막 접속일자와 최근 접속일자를 계산하여 휴면계정 전환(3)
-    public void accessTimeCalculator(Account account){
-        LocalDate lastAccessDate = account.getAccountStatus().getAccessDate();
-        LocalDate currentDate = LocalDate.now();
-        AccountStatus status = account.getAccountStatus();
+    public void accessTimeCalculator(Account account) {
+        if (account != null) {
+            AccountStatus status = account.getAccountStatus();
+            if (status != null ) {
+                LocalDate lastAccessDate = status.getAccessDate();
+                if (lastAccessDate != null) {
+                    LocalDate currentDate = LocalDate.now();
+                    long daysDifference = ChronoUnit.DAYS.between(lastAccessDate, currentDate);
 
-        long daysDifference = ChronoUnit.DAYS.between(lastAccessDate, currentDate);
-
-        if(daysDifference>=365){
-            status.setStatus(3);
-            account.setAccountStatus(status);
+                    if (daysDifference >= 365) {
+                        status.setStatus(3);
+                        account.setAccountStatus(status);
+                    }
+                }
+            }
         }
     }
 

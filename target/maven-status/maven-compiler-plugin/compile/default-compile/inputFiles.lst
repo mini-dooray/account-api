@@ -1,0 +1,12 @@
+/Users/bae/Documents/mini-dooray/account-api/src/main/java/com/minidooray/accountapi/service/impl/AccountServiceImpl.java
+/Users/bae/Documents/mini-dooray/account-api/src/main/java/com/minidooray/accountapi/repository/AccountRepository.java
+/Users/bae/Documents/mini-dooray/account-api/src/main/java/com/minidooray/accountapi/service/AccountService.java
+/Users/bae/Documents/mini-dooray/account-api/src/main/java/com/minidooray/accountapi/controller/AccountController.java
+/Users/bae/Documents/mini-dooray/account-api/src/main/java/com/minidooray/accountapi/request/RequestAccountDto.java
+/Users/bae/Documents/mini-dooray/account-api/src/main/java/com/minidooray/accountapi/entity/AdditionalInfo.java
+/Users/bae/Documents/mini-dooray/account-api/src/main/java/com/minidooray/accountapi/repository/AccountStatusRepository.java
+/Users/bae/Documents/mini-dooray/account-api/src/main/java/com/minidooray/accountapi/repository/AdditionalInfoRepository.java
+/Users/bae/Documents/mini-dooray/account-api/src/main/java/com/minidooray/accountapi/entity/AccountStatus.java
+/Users/bae/Documents/mini-dooray/account-api/src/main/java/com/minidooray/accountapi/entity/Account.java
+/Users/bae/Documents/mini-dooray/account-api/src/main/java/com/minidooray/accountapi/response/ResponseAccountDto.java
+/Users/bae/Documents/mini-dooray/account-api/src/main/java/com/minidooray/accountapi/AccountApiApplication.java

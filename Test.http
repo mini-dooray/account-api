@@ -37,17 +37,17 @@ Host: localhost:8003
 }
 
 ### 아이디 획득
-GET /account/user/68 HTTP/1.1
+GET /account/user/80 HTTP/1.1
 Content-Type: application/json
 Host: localhost:8003
 
 ### Password 획득
-GET /account/pwd/68 HTTP/1.1
+GET /account/pwd/80 HTTP/1.1
 Content-Type: application/json
 Host: localhost:8003
 
 ### 이메일 획득
-GET /account/email/68 HTTP/1.1
+GET /account/email/80 HTTP/1.1
 Content-Type: application/json
 Host: localhost:8003
 
@@ -75,7 +75,7 @@ Content-Type: application/json
 Host: localhost:8003
 
 {
-  "accountId" : "TSet123",
+  "accountId" : "TSe123",
   "password" : "123456"
 }
 
@@ -88,6 +88,6 @@ Host: localhost:8003
 
 
 ###Seq로 접속일자 업데이트
-PUT /account/date/?seq=1
+PUT /account/date/?seq=3
 Content-Type: application/json
 Host: localhost:8003

@@ -105,7 +105,7 @@ class AccountControllerTest {
     }
     @Test
     void testUpdateAccount() throws Exception {
-        // 요청 본문
+
         RequestAccountDto requestDto = createMockRequestAccountDto();
 
         ResponseAccountDto responseDto = new ResponseAccountDto();
@@ -259,6 +259,21 @@ class AccountControllerTest {
         assertFalse(loginFailure);
     }
 
+    @Test
+    void testUpdateDate_Success() {
+
+        AccountService accountService = mock(AccountService.class);
+        AccountController accountController = new AccountController(accountService);
+
+        Long seq = 1L;
+        ResponseEntity<Account> response = accountController.updateDate(seq);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNull(response.getBody());
+
+        verify(accountService).updateAccessDate(seq);
+    }
+
 
 
 
@@ -317,5 +332,6 @@ class AccountControllerTest {
             account.setAccountStatus(status);
         }
     }
+
 
 }

@@ -4,9 +4,7 @@ import lombok.*;
 
 import javax.persistence.PrePersist;
 import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 @Data
 @ToString

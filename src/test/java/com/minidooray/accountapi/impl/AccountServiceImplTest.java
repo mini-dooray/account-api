@@ -1,42 +1,30 @@
 package com.minidooray.accountapi.impl;
 
-
-import com.minidooray.accountapi.controller.AccountController;
-import com.minidooray.accountapi.entity.Account;
-import com.minidooray.accountapi.entity.AccountStatus;
-import com.minidooray.accountapi.entity.AdditionalInfo;
-import com.minidooray.accountapi.entity.QAccount;
+import com.minidooray.accountapi.entity.*;
 import com.minidooray.accountapi.repository.AccountRepository;
 import com.minidooray.accountapi.repository.AccountStatusRepository;
 import com.minidooray.accountapi.repository.AdditionalInfoRepository;
 import com.minidooray.accountapi.request.RequestAccountDto;
 import com.minidooray.accountapi.response.ResponseAccountDto;
-import com.minidooray.accountapi.service.AccountService;
 import com.minidooray.accountapi.service.impl.AccountServiceImpl;
 import com.querydsl.jpa.impl.JPAQuery;
-import org.junit.jupiter.api.Assertions;
+import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.Query;
-
+import javax.persistence.*;
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 //@DataJpaTest
 //@AutoConfigureTestDatabase
@@ -53,19 +41,26 @@ public class AccountServiceImplTest {
     @Mock
     private AdditionalInfoRepository additionalInfoRepository;
 
-//    @Mock
-//    private TestEntityManager testEntityManager;
     @Mock
     private EntityManager entityManager;
+
     @Mock
     private AccountServiceImpl accountService;
 
+    @PersistenceUnit
+    private EntityManagerFactory entityManagerFactory;
+
+    @Mock
+    private JPAQueryFactory queryFactory;
+
     @BeforeEach
-    void setUp(){
+    void setUp() {
         MockitoAnnotations.openMocks(this);
-//        entityManager = testEntityManager.getEntityManager();
-        accountService = new AccountServiceImpl(accountRepository,accountStatusRepository
-        ,additionalInfoRepository,entityManager);
+        entityManager = mock(EntityManager.class);
+        accountRepository = mock(AccountRepository.class);
+        accountStatusRepository = mock(AccountStatusRepository.class);
+        additionalInfoRepository = mock(AdditionalInfoRepository.class);
+        accountService = new AccountServiceImpl(accountRepository, accountStatusRepository, additionalInfoRepository, entityManagerFactory);
     }
     @Test
     void testGetAccount() {
@@ -189,38 +184,210 @@ public class AccountServiceImplTest {
 
     @Test
     void testGetAccountByEmail() {
+        String email = "Test123@TestCode.com";
 
         Account account = createMockAccount();
-        String email = account.getAdditionalInfo().getEmail();
-        ResponseAccountDto expectedDto = convertToResponseAccountDto(account);
 
-        // EntityManagerFactory와 EntityManager에 대한 Mock 생성
-        EntityManagerFactory entityManagerFactory = Mockito.mock(EntityManagerFactory.class);
-        EntityManager entityManager = Mockito.mock(EntityManager.class);
+        QAccount qAccount = QAccount.account;
+        QAdditionalInfo qAdditionalInfo = QAdditionalInfo.additionalInfo;
+        JPAQuery<Account> queryMock = Mockito.mock(JPAQuery.class);
+        TypedQuery<Account> typedQuery = Mockito.mock(TypedQuery.class);
+        when(entityManager.createQuery(Mockito.anyString(), Mockito.eq(Account.class))).thenReturn(typedQuery);
+        when(typedQuery.getSingleResult()).thenReturn(account);
+        when(queryMock.select(qAccount)).thenReturn(queryMock);
+        when(queryMock.from(qAccount)).thenReturn(queryMock);
+        when(queryMock.join(qAccount.additionalInfo, qAdditionalInfo)).thenReturn(queryMock);
+        when(queryMock.where(qAdditionalInfo.email.eq(email))).thenReturn(queryMock);
+        when(typedQuery.getResultList()).thenReturn(Collections.singletonList(account));
 
-        // EntityManager와 EntityManagerFactory의 동작을 모의화
-        when(entityManager.getEntityManagerFactory()).thenReturn(entityManagerFactory);
-        when(entityManager.createNamedQuery(anyString())).thenReturn(Mockito.mock(Query.class));
 
-        // AccountServiceImpl 인스턴스 생성
-        AccountServiceImpl accountService = new AccountServiceImpl(
-                accountRepository,
-                accountStatusRepository,
-                additionalInfoRepository,
-                entityManager
-        );
+        ResponseAccountDto result = convertToResponseAccountDto(account);
 
-        // accountService.getAccountByEmail()의 동작을 모의화
-        when(accountService.getAccountByEmail(email)).thenReturn(expectedDto);
-
-        // 테스트할 메소드 호출
-        ResponseAccountDto actualDto = accountService.getAccountByEmail(email);
-
-        // 결과 검증
-        assertEquals(expectedDto, actualDto);
+        assertEquals(account.getSeq(), result.getAccountSeq());
+        assertEquals(account.getId(), result.getAccountId());
+        assertEquals(account.getPassword(), result.getPassword());
+        assertEquals(account.getName(), result.getName());
+        assertEquals(email, result.getEmail());
+        assertEquals(account.getAdditionalInfo().getPhoneNumber(), result.getPhoneNumber());
+        assertEquals(account.getAccountStatus().getStatus(), result.getStatus());
+        assertEquals(account.getAccountStatus().getAccessDate(), result.getLastAccessDate());
     }
 
+    @Test
+    void testExistEmail() {
+        //실제로 들어가 있어야만 돌아감.
+        String email = "alice@example.com";
 
+        QAccount account = QAccount.account;
+        QAdditionalInfo additionalInfo = QAdditionalInfo.additionalInfo;
+
+        Long count = 1L;
+
+        JPAQuery<Long> queryMock = Mockito.mock(JPAQuery.class);
+        when(queryMock.select(account.count())).thenReturn(queryMock);
+        when(queryMock.from(account)).thenReturn(queryMock);
+        when(queryMock.join(account.additionalInfo, additionalInfo)).thenReturn(queryMock);
+        when(queryMock.where(account.additionalInfo.email.eq(email))).thenReturn(queryMock);
+        when(queryMock.fetchOne()).thenReturn(count);
+
+        AccountServiceImpl accountService = new AccountServiceImpl(accountRepository, accountStatusRepository, additionalInfoRepository, entityManagerFactory);
+        boolean result = accountService.existEmail(email);
+        assertTrue(result);
+    }
+
+    @Test
+    void testExistId() {
+        //실제로 들어가 있어야만 돌아감.
+        String id = "user1";
+
+        QAccount qAccount = QAccount.account;
+
+        Long count = 1L;
+
+        JPAQueryFactory queryFactory = Mockito.mock(JPAQueryFactory.class);
+        JPAQuery<Long> queryMock = Mockito.mock(JPAQuery.class);
+
+        when(queryFactory.select(qAccount.count())).thenReturn(queryMock);
+        when(queryMock.from(qAccount)).thenReturn(queryMock);
+        when(queryMock.where(qAccount.id.eq(id))).thenReturn(queryMock);
+        when(queryMock.fetchOne()).thenReturn(count);
+
+        AccountServiceImpl accountService = new AccountServiceImpl(accountRepository, accountStatusRepository, additionalInfoRepository, entityManagerFactory);
+        boolean result = accountService.existId(id);
+        assertTrue(result);
+    }
+
+    @Test
+    void testGetAccountById() {
+        //db에서 데이터를 가져옴, db와 맞춰야함.
+        String id = "user1";
+        String password = "password1";
+
+        Account account = new Account();
+        account.setPassword(password);
+        account.setId(id);
+        account.setName("John");
+        account.setSeq(1L);
+
+        AccountStatus status = new AccountStatus();
+        status.setStatus(1);
+        status.setAccessDate(LocalDate.now());
+        account.setAccountStatus(status);
+
+        AdditionalInfo info = new AdditionalInfo();
+        info.setPhoneNumber("1234567890");
+        info.setEmail("john@example.com");
+        account.setAdditionalInfo(info);
+
+        QAccount qAccount = QAccount.account;
+        QAdditionalInfo qAdditionalInfo = QAdditionalInfo.additionalInfo;
+        JPAQuery<Account> queryMock = Mockito.mock(JPAQuery.class);
+        TypedQuery<Account> typedQuery = Mockito.mock(TypedQuery.class);
+        when(entityManager.createQuery(Mockito.anyString(), Mockito.eq(Account.class))).thenReturn(typedQuery);
+        when(typedQuery.getSingleResult()).thenReturn(account);
+        when(queryMock.select(qAccount)).thenReturn(queryMock);
+        when(queryMock.from(qAccount)).thenReturn(queryMock);
+        when(queryMock.join(qAccount.additionalInfo, qAdditionalInfo)).thenReturn(queryMock);
+        when(queryMock.where(qAccount.id.eq(id))).thenReturn(queryMock);
+        when(typedQuery.getResultList()).thenReturn(Collections.singletonList(account));
+
+
+//        ResponseAccountDto result = convertToResponseAccountDto(account);
+        ResponseAccountDto result = accountService.getAccountById(id);
+
+        assertEquals(account.getSeq(), result.getAccountSeq());
+        assertEquals(id, result.getAccountId());
+        assertEquals(account.getPassword(), result.getPassword());
+        assertEquals(account.getName(), result.getName());
+        assertEquals(account.getAdditionalInfo().getEmail(), result.getEmail());
+        assertEquals(account.getAdditionalInfo().getPhoneNumber(), result.getPhoneNumber());
+        assertEquals(account.getAccountStatus().getStatus(), result.getStatus());
+        assertEquals(account.getAccountStatus().getAccessDate(), result.getLastAccessDate());
+    }
+
+    @Test
+    void testConvertToResponseAccountDto() {
+        Account account = createMockAccount();
+
+        ResponseAccountDto result = convertToResponseAccountDto(account);
+
+        assertEquals(account.getSeq(), result.getAccountSeq());
+        assertEquals(account.getId(), result.getAccountId());
+        assertEquals(account.getPassword(), result.getPassword());
+        assertEquals(account.getName(), result.getName());
+
+        AdditionalInfo additionalInfo = account.getAdditionalInfo();
+        if (additionalInfo != null) {
+            assertEquals(additionalInfo.getEmail(), result.getEmail());
+            assertEquals(additionalInfo.getPhoneNumber(), result.getPhoneNumber());
+        } else {
+            assertNull(result.getEmail());
+            assertNull(result.getPhoneNumber());
+        }
+
+        AccountStatus accountStatus = account.getAccountStatus();
+        if (accountStatus != null) {
+            assertEquals(accountStatus.getStatus(), result.getStatus());
+            assertEquals(accountStatus.getAccessDate(), result.getLastAccessDate());
+        } else {
+            assertNull(result.getStatus());
+            assertNull(result.getLastAccessDate());
+        }
+    }
+
+    @Test
+    void testExistLoginAccount() {
+        String id = "TSe123";
+        String password = "123456";
+
+        AccountServiceImpl accountService = new AccountServiceImpl(accountRepository, accountStatusRepository, additionalInfoRepository, entityManagerFactory);
+
+        AccountServiceImpl accountServiceMock = Mockito.spy(accountService);
+        Mockito.doNothing().when(accountServiceMock).setAccess(Mockito.anyString(), Mockito.anyString());
+
+        boolean result = accountServiceMock.existLoginAccount(id, password);
+
+        verify(accountServiceMock, times(1)).getAccountById(id);
+        verify(accountServiceMock, times(1)).setAccess(id, password);
+
+        assertTrue(result);
+    }
+    @Test
+    void testAccessTimeCalculator() {
+
+        Account account = mock(Account.class);
+        AccountStatus status = mock(AccountStatus.class);
+        LocalDate lastAccessDate = LocalDate.now().minusYears(1);
+
+        when(account.getAccountStatus()).thenReturn(status);
+        when(status.getAccessDate()).thenReturn(lastAccessDate);
+        when(accountRepository.saveAndFlush(any(Account.class))).thenReturn(account);
+
+        accountService.accessTimeCalculator(account);
+
+        verify(status).setStatus(3);
+//        verify(accountRepository).saveAndFlush(account);
+    }
+
+    @Test
+    void testUpdateAccessDate() {
+        Account account = mock(Account.class);
+        AccountStatus status = mock(AccountStatus.class);
+        LocalDate currentDate = LocalDate.now();
+
+        when(accountRepository.findById(anyLong())).thenReturn(Optional.ofNullable(account));
+        when(account.getAccountStatus()).thenReturn(status);
+        when(status.getAccessDate()).thenReturn(currentDate);
+        when(account.getAdditionalInfo()).thenReturn(mock(AdditionalInfo.class));
+
+        ResponseAccountDto response = accountService.updateAccessDate(1L);
+
+        verify(accountRepository).saveAndFlush(account);
+
+        assertEquals(currentDate, status.getAccessDate());
+        assertEquals(currentDate, response.getLastAccessDate());
+        // 다른 필드에 대한 검증 로직 추가
+    }
 
     private Account createMockAccount() {
         Account account = new Account();
@@ -264,6 +431,8 @@ public class AccountServiceImplTest {
                 .lastAccessDate(account.getAccountStatus().getAccessDate())
                 .build();
     }
+
+
 
 
 }
