@@ -35,7 +35,6 @@ public class AccountController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
     @PostMapping(value = "/account/delete/{seq}", produces = MediaType.APPLICATION_JSON_VALUE)
-    @ResponseBody
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<Void> deleteAccount(@PathVariable Long seq) {
         accountService.deleteAccount(seq);
