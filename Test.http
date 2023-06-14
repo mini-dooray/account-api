@@ -88,6 +88,6 @@ Host: localhost:8003
 
 
 ###Seq로 접속일자 업데이트
-PUT /account/date/?seq=3
+PUT /account/date/?seq=80
 Content-Type: application/json
 Host: localhost:8003

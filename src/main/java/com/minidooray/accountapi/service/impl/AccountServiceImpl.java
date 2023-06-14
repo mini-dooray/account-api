@@ -287,9 +287,9 @@ public class AccountServiceImpl extends QuerydslRepositorySupport implements Acc
         Account account = accountRepository.findById(seq)
                 .orElse(null);
 
-        AccountStatus status = account.getAccountStatus();
-        status.setAccessDate(LocalDate.now());
         if (account != null) {
+            AccountStatus status = account.getAccountStatus();
+            status.setAccessDate(LocalDate.now());
             account.setAccountStatus(status);
             accountRepository.saveAndFlush(account);
 

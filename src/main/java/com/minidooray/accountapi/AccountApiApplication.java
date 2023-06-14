@@ -7,7 +7,7 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 import javax.persistence.EntityManagerFactory;
-import javax.persistence.PersistenceUnit;
+
 
 @SpringBootApplication
 @ConfigurationPropertiesScan

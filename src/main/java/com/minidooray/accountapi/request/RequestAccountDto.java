@@ -7,7 +7,6 @@ import javax.validation.constraints.Max;
 import java.time.LocalDate;
 
 @Data
-@ToString
 public class RequestAccountDto {
     private String accountId;
     private String password;
