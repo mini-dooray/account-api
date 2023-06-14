@@ -7,8 +7,10 @@ import com.minidooray.accountapi.service.AccountService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 
 
 @RestController
@@ -27,7 +29,7 @@ public class AccountController {
 
     @PostMapping("/account/register")
     @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<Void> register(@RequestBody RequestAccountDto requestAccountDto){
+    public ResponseEntity<Void> register(@RequestBody @Valid RequestAccountDto requestAccountDto){
         accountService.register(requestAccountDto);
 
         return ResponseEntity.status(HttpStatus.CREATED).build();
@@ -35,12 +37,13 @@ public class AccountController {
     @PostMapping(value = "/account/delete/{seq}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     @ResponseStatus(HttpStatus.OK)
-    public ResponseAccountDto deleteAccount(@PathVariable Long seq) {
-        return accountService.deleteAccount(seq);
+    public ResponseEntity<Void> deleteAccount(@PathVariable Long seq) {
+        accountService.deleteAccount(seq);
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
 
     @PutMapping("/account/update/{seq}")
-    public ResponseAccountDto updateAccount(@PathVariable Long seq, @RequestBody RequestAccountDto requestAccountDto) {
+    public ResponseAccountDto updateAccount(@PathVariable Long seq, @RequestBody @Valid RequestAccountDto requestAccountDto) {
         return accountService.updateAccount(seq, requestAccountDto);
     }
 

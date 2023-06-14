@@ -1,16 +1,14 @@
 package com.minidooray.accountapi.entity;
 
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import javax.persistence.*;
 
 @Getter
-@Setter
-@NoArgsConstructor
 @Entity
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 @Table(name = "account")
 public class Account {
     @Id
@@ -33,16 +31,31 @@ public class Account {
     private AdditionalInfo additionalInfo;
 
     @Builder
-    public void setAccount(String  id, String password, String name){
+    public void createAccount(String  id, String password, String name,String email, String phoneNumber){
         this.id=id;
         this.password=password;
         this.name=name;
-
+        additionalInfo.setAdditionalInfo(email,phoneNumber);
+    }
+    @Builder
+    public void setAccount(String id, String password, String name){
+        this.id=id;
+        this.password=password;
+        this.name=name;
     }
 
-    public void setData(AccountStatus accountStatus, AdditionalInfo additionalInfo){
+
+
+    public void saveInfoAndStatus(AccountStatus accountStatus, AdditionalInfo additionalInfo){
         this.accountStatus=accountStatus;
         this.additionalInfo=additionalInfo;
+    }
+
+    public void setAdditionalInfo(AdditionalInfo additionalInfo){
+        this.additionalInfo=additionalInfo;
+    }
+    public void setAccountStatus(AccountStatus accountStatus){
+        this.accountStatus=accountStatus;
     }
 }
 

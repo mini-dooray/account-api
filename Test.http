@@ -9,10 +9,10 @@ Content-Type: application/json
 Host: localhost:8003
 
 {
-  "accountId" : "TSet123",
+  "accountId" : "TSet1231",
   "password" : "1234",
-  "name" : "TestUser",
-  "email" : "Testt55@Test.com",
+  "name" : "TestUser1",
+  "email" : "Testt56@Test.com",
   "phoneNumber" : "010-0000-0000"
 }
 

@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AccountController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">account-api</a> &gt; <a href="index.source.html" class="el_package">com.minidooray.accountapi.controller</a> &gt; <span class="el_source">AccountController.java</span></div><h1>AccountController.java</h1><pre class="source lang-java linenums">package com.minidooray.accountapi.controller;
+
+import com.minidooray.accountapi.entity.Account;
+import com.minidooray.accountapi.request.RequestAccountDto;
+import com.minidooray.accountapi.response.ResponseAccountDto;
+import com.minidooray.accountapi.service.AccountService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import javax.validation.Valid;
+
+
+@RestController
+public class AccountController {
+
+    private final AccountService accountService;
+
+<span class="fc" id="L21">    public AccountController(AccountService accountService) {</span>
+<span class="fc" id="L22">        this.accountService = accountService;</span>
+<span class="fc" id="L23">    }</span>
+
+    @GetMapping(&quot;/account/{seq}&quot;)
+    public ResponseAccountDto getAccount(@PathVariable Long seq) {
+<span class="fc" id="L27">        return accountService.getAccount(seq);</span>
+    }
+
+    @PostMapping(&quot;/account/register&quot;)
+    @ResponseStatus(HttpStatus.CREATED)
+    public ResponseEntity&lt;Void&gt; register(@RequestBody @Valid RequestAccountDto requestAccountDto){
+<span class="fc" id="L33">        accountService.register(requestAccountDto);</span>
+
+<span class="fc" id="L35">        return ResponseEntity.status(HttpStatus.CREATED).build();</span>
+    }
+    @PostMapping(value = &quot;/account/delete/{seq}&quot;, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity&lt;Void&gt; deleteAccount(@PathVariable Long seq) {
+<span class="fc" id="L41">        accountService.deleteAccount(seq);</span>
+<span class="fc" id="L42">        return ResponseEntity.status(HttpStatus.OK).build();</span>
+    }
+
+    @PutMapping(&quot;/account/update/{seq}&quot;)
+    public ResponseAccountDto updateAccount(@PathVariable Long seq, @RequestBody @Valid RequestAccountDto requestAccountDto) {
+<span class="fc" id="L47">        return accountService.updateAccount(seq, requestAccountDto);</span>
+    }
+
+    @GetMapping(&quot;/account/user/{seq}&quot;)
+    public String getAccountId(@PathVariable Long seq){
+<span class="fc" id="L52">        return accountService.getAccountId(seq);</span>
+    }
+
+    @GetMapping(&quot;/account/email/{seq}&quot;)
+    public String getEmail(@PathVariable Long seq){
+<span class="fc" id="L57">        return accountService.getEmail(seq);</span>
+    }
+
+    @GetMapping(&quot;/account/pwd/{seq}&quot;)
+    public String getPassword(@PathVariable Long seq){
+<span class="fc" id="L62">        return accountService.getPassword(seq);</span>
+    }
+
+    @GetMapping(&quot;/account/{email}/found&quot;)
+    public ResponseAccountDto getAccountByEmail(@PathVariable String email) {
+<span class="fc" id="L67">        return accountService.getAccountByEmail(email);</span>
+    }
+
+    @GetMapping(&quot;/account/find/email/{email}&quot;)
+    public Boolean existsEmail(@PathVariable String email){
+<span class="fc" id="L72">        return accountService.existEmail(email);</span>
+    }
+
+    @GetMapping(&quot;/account/find/id/{id}&quot;)
+    public Boolean existsId(@PathVariable String id){
+<span class="fc" id="L77">        return accountService.existId(id);</span>
+    }
+
+    @PostMapping(&quot;/account/login&quot;)
+    public ResponseEntity&lt;String&gt; login(@RequestBody RequestAccountDto requestDto) {
+<span class="fc" id="L82">        String accountId = requestDto.getAccountId();</span>
+<span class="fc" id="L83">        String password = requestDto.getPassword();</span>
+
+<span class="fc" id="L85">        boolean login = accountService.existLoginAccount(accountId, password);</span>
+
+<span class="fc bfc" id="L87" title="All 2 branches covered.">        if (login) {</span>
+<span class="fc" id="L88">            return ResponseEntity.ok(&quot;로그인 성공&quot;);</span>
+        } else {
+<span class="fc" id="L90">            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(&quot;로그인 실패&quot;);</span>
+        }
+    }
+
+
+
+    @GetMapping(&quot;/account/account/{id}&quot;)
+    public ResponseAccountDto getAccountById(@PathVariable String id){
+<span class="fc" id="L98">        return accountService.getAccountById(id);</span>
+    }
+
+    @PutMapping(&quot;/account/date/&quot;)
+    public ResponseEntity&lt;Account&gt; updateDate(@RequestParam Long seq){
+<span class="fc" id="L103">        accountService.updateAccessDate(seq);</span>
+<span class="fc" id="L104">        return ResponseEntity.status(HttpStatus.OK).build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.9.202303310957</span></div></body></html>

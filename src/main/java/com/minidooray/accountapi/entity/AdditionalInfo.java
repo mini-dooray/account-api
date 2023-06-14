@@ -1,14 +1,13 @@
 package com.minidooray.accountapi.entity;
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import javax.persistence.*;
 @Getter
-@Setter
 @Entity
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Table(name = "additional_info")
 public class AdditionalInfo {
     @Id

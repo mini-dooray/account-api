@@ -1,9 +1,6 @@
 package com.minidooray.accountapi.entity;
 
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import javax.persistence.*;
 import javax.validation.constraints.Max;
@@ -12,9 +9,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Getter
-@Setter
 @Entity
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Table(name = "account_status")
 public class AccountStatus {
 
@@ -41,9 +39,26 @@ public class AccountStatus {
     @Max(3)
     private int status;
 
-    @Builder
-    public void setAccountStatus(LocalDate accessDate){
-        this.accessDate=accessDate;
+    public void setAccountStatus(LocalDate accessDate, int status){
+        this.status=status;
+        this.accessDate = accessDate;
+
+//        if(account!=null) {
+//            this.account.getAccountStatus().setAccountStatus(accessDate, status);
+//        }
+//        else{
+//            account = new Account();
+//            account.getAccountStatus().setAccountStatus(accessDate, status);
+//
+//        }
+    }
+
+    public void saveStatus(int status){
+        this.status=status;
+    }
+
+    public void saveAccessDate(LocalDate localDate){
+        this.accessDate = localDate;
     }
 
     public void setAccountByStatus(Account account){

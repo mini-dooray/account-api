@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AccountRepositoryImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">account-api</a> &gt; <a href="index.source.html" class="el_package">com.minidooray.accountapi.repository.impl</a> &gt; <span class="el_source">AccountRepositoryImpl.java</span></div><h1>AccountRepositoryImpl.java</h1><pre class="source lang-java linenums">package com.minidooray.accountapi.repository.impl;
+
+import com.minidooray.accountapi.entity.Account;
+import com.minidooray.accountapi.entity.QAccount;
+import com.minidooray.accountapi.entity.QAdditionalInfo;
+import com.minidooray.accountapi.repository.AccountRepositoryCustom;
+import com.querydsl.jpa.impl.JPAQuery;
+import org.springframework.data.jpa.repository.support.QuerydslRepositorySupport;
+
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+
+public class AccountRepositoryImpl extends QuerydslRepositorySupport implements AccountRepositoryCustom {
+
+
+    private final EntityManager entityManager;
+    public AccountRepositoryImpl(EntityManagerFactory entityManagerFactory) {
+<span class="fc" id="L18">        super(Account.class);</span>
+<span class="fc" id="L19">        this.entityManager = entityManagerFactory.createEntityManager();</span>
+<span class="fc" id="L20">    }</span>
+
+    @Override
+    public Account getAccountByEmail(String email){
+<span class="nc" id="L24">        JPAQuery&lt;Account&gt; query =new JPAQuery&lt;&gt;(entityManager);</span>
+
+<span class="nc" id="L26">        QAccount qAccount = QAccount.account;</span>
+<span class="nc" id="L27">        QAdditionalInfo qAdditionalInfo = QAdditionalInfo.additionalInfo;</span>
+
+<span class="nc" id="L29">        return query.select(qAccount)</span>
+<span class="nc" id="L30">                .from(qAccount)</span>
+<span class="nc" id="L31">                .join(qAccount.additionalInfo,qAdditionalInfo)</span>
+<span class="nc" id="L32">                .where(qAdditionalInfo.email.eq(email))</span>
+<span class="nc" id="L33">                .fetchOne();</span>
+    }
+    @Override
+    public Long countEmail(String email) {
+<span class="nc" id="L37">        QAccount account = QAccount.account;</span>
+<span class="nc" id="L38">        QAdditionalInfo additionalInfo = QAdditionalInfo.additionalInfo;</span>
+        Long count;
+<span class="nc" id="L40">        count = new JPAQuery&lt;&gt;(entityManager)</span>
+<span class="nc" id="L41">                .select(account.count())</span>
+<span class="nc" id="L42">                .from(account)</span>
+<span class="nc" id="L43">                .join(account.additionalInfo, additionalInfo)</span>
+<span class="nc" id="L44">                .where(additionalInfo.email.eq(email))</span>
+<span class="nc" id="L45">                .fetchOne();</span>
+
+<span class="nc" id="L47">        return count;</span>
+    }
+
+    @Override
+    public Long countId(String id) {
+<span class="nc" id="L52">        QAccount qAccount = QAccount.account;</span>
+
+        Long count;
+<span class="nc" id="L55">        count = new JPAQuery&lt;&gt;(entityManager)</span>
+<span class="nc" id="L56">                .select(qAccount.count())</span>
+<span class="nc" id="L57">                .from(qAccount)</span>
+<span class="nc" id="L58">                .where(qAccount.id.eq(id))</span>
+<span class="nc" id="L59">                .fetchOne();</span>
+
+<span class="nc" id="L61">        return count;</span>
+    }
+
+
+    @Override
+    public Account getAccountById(String id) {
+<span class="nc" id="L67">        QAccount qAccount = QAccount.account;</span>
+<span class="nc" id="L68">        JPAQuery&lt;Account&gt; query = new JPAQuery&lt;&gt;(entityManager);</span>
+
+<span class="nc" id="L70">        return query</span>
+<span class="nc" id="L71">                .select(qAccount)</span>
+<span class="nc" id="L72">                .from(qAccount)</span>
+<span class="nc" id="L73">                .where(qAccount.id.eq(id))</span>
+<span class="nc" id="L74">                .fetchOne();</span>
+    }
+
+    @Override
+    public Account getAccountByIdAndPassword(String id, String password) {
+<span class="nc" id="L79">        QAccount qAccount = QAccount.account;</span>
+
+<span class="nc" id="L81">        JPAQuery&lt;Account&gt; query = new JPAQuery&lt;&gt;(entityManager);</span>
+<span class="nc" id="L82">        return query</span>
+<span class="nc" id="L83">                .select(qAccount)</span>
+<span class="nc" id="L84">                .from(qAccount)</span>
+<span class="nc" id="L85">                .where(qAccount.id.eq(id).and(qAccount.password.eq(password)))</span>
+<span class="nc" id="L86">                .fetchOne();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.9.202303310957</span></div></body></html>

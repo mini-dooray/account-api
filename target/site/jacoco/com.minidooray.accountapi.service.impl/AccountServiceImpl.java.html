@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="ko"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AccountServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">account-api</a> &gt; <a href="index.source.html" class="el_package">com.minidooray.accountapi.service.impl</a> &gt; <span class="el_source">AccountServiceImpl.java</span></div><h1>AccountServiceImpl.java</h1><pre class="source lang-java linenums">package com.minidooray.accountapi.service.impl;
+
+import com.minidooray.accountapi.entity.*;
+import com.minidooray.accountapi.repository.AccountRepository;
+import com.minidooray.accountapi.repository.AccountStatusRepository;
+import com.minidooray.accountapi.repository.AdditionalInfoRepository;
+import com.minidooray.accountapi.request.RequestAccountDto;
+import com.minidooray.accountapi.response.ResponseAccountDto;
+import com.minidooray.accountapi.service.AccountService;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+
+@Service
+@Transactional
+public class AccountServiceImpl  implements AccountService {
+
+
+    private final AccountRepository accountRepository;
+    private final AccountStatusRepository accountStatusRepository;
+    private final AdditionalInfoRepository additionalInfoRepository;
+
+<span class="fc" id="L25">    public AccountServiceImpl(AccountRepository accountRepository, AccountStatusRepository accountStatusRepository, AdditionalInfoRepository additionalInfoRepository) {</span>
+<span class="fc" id="L26">        this.accountRepository = accountRepository;</span>
+<span class="fc" id="L27">        this.accountStatusRepository = accountStatusRepository;</span>
+<span class="fc" id="L28">        this.additionalInfoRepository = additionalInfoRepository;</span>
+<span class="fc" id="L29">    }</span>
+
+
+    @Override
+    public ResponseAccountDto getAccount(Long seq) {
+<span class="nc" id="L34">        Account account = accountRepository.findById(seq)</span>
+<span class="nc" id="L35">                .orElse(null);</span>
+<span class="nc" id="L36">        accessTimeCalculator(account);</span>
+
+<span class="nc" id="L38">        return ResponseAccountDto.builder()</span>
+<span class="nc" id="L39">                .accountSeq(account.getSeq())</span>
+<span class="nc" id="L40">                .accountId(account.getId())</span>
+<span class="nc" id="L41">                .password(account.getPassword())</span>
+<span class="nc" id="L42">                .name(account.getName())</span>
+<span class="nc" id="L43">                .email(account.getAdditionalInfo().getEmail())</span>
+<span class="nc" id="L44">                .phoneNumber(account.getAdditionalInfo().getPhoneNumber())</span>
+<span class="nc" id="L45">                .status(account.getAccountStatus().getStatus())</span>
+<span class="nc" id="L46">                .lastAccessDate(account.getAccountStatus().getAccessDate())</span>
+<span class="nc" id="L47">                .build();</span>
+
+    }
+    //status 1 = 가입 , 2  = 탈퇴 , 3 = 휴면
+    @Override
+    @Transactional
+    public void deleteAccount(Long seq) {
+<span class="nc" id="L54">        accountRepository.deleteById(seq);</span>
+<span class="nc" id="L55">    }</span>
+
+    public ResponseAccountDto register(RequestAccountDto request) {
+
+<span class="nc" id="L59">        Account account1 = new Account();</span>
+<span class="nc" id="L60">        account1.setAccount(request.getAccountId(),request.getPassword(),request.getName());</span>
+
+<span class="nc" id="L62">        AccountStatus status1 = new AccountStatus();</span>
+<span class="nc" id="L63">        AdditionalInfo info1 = new AdditionalInfo();</span>
+
+<span class="nc" id="L65">        info1.setAccountByInfo(account1);</span>
+<span class="nc" id="L66">        status1.setAccountByStatus(account1);</span>
+
+<span class="nc" id="L68">        status1.setAccountStatus(LocalDate.now(),1);</span>
+<span class="nc" id="L69">        status1.setAccountByStatus(account1);</span>
+<span class="nc" id="L70">        info1.setAdditionalInfo(request.getEmail(),request.getPhoneNumber());</span>
+
+
+<span class="nc" id="L73">        account1.saveInfoAndStatus(status1,info1);</span>
+
+<span class="nc" id="L75">        Account savedAccount = accountRepository.save(account1);</span>
+<span class="nc" id="L76">        accountStatusRepository.save(status1);</span>
+<span class="nc" id="L77">        additionalInfoRepository.save(info1);</span>
+
+
+<span class="nc" id="L80">        return ResponseAccountDto.builder()</span>
+<span class="nc" id="L81">                .accountSeq(savedAccount.getSeq())</span>
+<span class="nc" id="L82">                .accountId(savedAccount.getId())</span>
+<span class="nc" id="L83">                .name(savedAccount.getName())</span>
+<span class="nc" id="L84">                .password(savedAccount.getPassword())</span>
+<span class="nc" id="L85">                .email(savedAccount.getAdditionalInfo().getEmail())</span>
+<span class="nc" id="L86">                .phoneNumber(savedAccount.getAdditionalInfo().getPhoneNumber())</span>
+<span class="nc" id="L87">                .status(savedAccount.getAccountStatus().getStatus())</span>
+<span class="nc" id="L88">                .build();</span>
+    }
+
+
+    public ResponseAccountDto updateAccount(Long seq, RequestAccountDto requestAccountDto) {
+<span class="nc" id="L93">        Account account = accountRepository.findById(seq)</span>
+<span class="nc" id="L94">                .orElse(null);</span>
+
+<span class="nc bnc" id="L96" title="All 2 branches missed.">        if(account!=null){</span>
+<span class="nc" id="L97">            account.setAccount(requestAccountDto.getAccountId(), requestAccountDto.getPassword(), requestAccountDto.getName());</span>
+
+<span class="nc" id="L99">            return ResponseAccountDto.builder()</span>
+<span class="nc" id="L100">                    .accountSeq(account.getSeq())</span>
+<span class="nc" id="L101">                    .accountId(account.getId())</span>
+<span class="nc" id="L102">                    .password(account.getPassword())</span>
+<span class="nc" id="L103">                    .name(account.getName())</span>
+<span class="nc" id="L104">                    .email(account.getAdditionalInfo().getEmail())</span>
+<span class="nc" id="L105">                    .phoneNumber(account.getAdditionalInfo().getPhoneNumber())</span>
+<span class="nc" id="L106">                    .status(account.getAccountStatus().getStatus())</span>
+<span class="nc" id="L107">                    .lastAccessDate(LocalDate.now())</span>
+<span class="nc" id="L108">                    .build();</span>
+        }
+<span class="nc" id="L110">        else return null;</span>
+    }
+
+    @Override
+    public String getAccountId(Long seq) {
+<span class="nc" id="L115">        ResponseAccountDto responseAccountDto = getAccount(seq);</span>
+
+<span class="nc" id="L117">        return responseAccountDto.getAccountId();</span>
+    }
+
+    @Override
+    public String getPassword(Long seq) {
+<span class="nc" id="L122">        ResponseAccountDto responseAccountDto = getAccount(seq);</span>
+
+<span class="nc" id="L124">        return responseAccountDto.getPassword();</span>
+    }
+
+    @Override
+    public String getEmail(Long seq) {
+<span class="nc" id="L129">        ResponseAccountDto responseAccountDto = getAccount(seq);</span>
+
+<span class="nc" id="L131">        return responseAccountDto.getEmail();</span>
+    }
+
+    @Override
+    public ResponseAccountDto getAccountByEmail(String email) {
+<span class="nc" id="L136">        Account result = accountRepository.getAccountByEmail(email);</span>
+<span class="nc bnc" id="L137" title="All 2 branches missed.">        if (result != null) {</span>
+<span class="nc" id="L138">            accessTimeCalculator(result);</span>
+<span class="nc" id="L139">            return convertToResponseAccountDto(result);</span>
+        } else {
+<span class="nc" id="L141">            return null;</span>
+        }
+    }
+
+    private ResponseAccountDto convertToResponseAccountDto(Account account) {
+<span class="nc" id="L146">        ResponseAccountDto dto = ResponseAccountDto.builder()</span>
+<span class="nc" id="L147">                .accountSeq(account.getSeq())</span>
+<span class="nc" id="L148">                .accountId(account.getId())</span>
+<span class="nc" id="L149">                .password(account.getPassword())</span>
+<span class="nc" id="L150">                .name(account.getName())</span>
+<span class="nc" id="L151">                .build();</span>
+
+<span class="nc" id="L153">        AdditionalInfo additionalInfo = account.getAdditionalInfo();</span>
+<span class="nc bnc" id="L154" title="All 2 branches missed.">        if (additionalInfo != null) {</span>
+<span class="nc" id="L155">            dto.setEmail(additionalInfo.getEmail());</span>
+<span class="nc" id="L156">            dto.setPhoneNumber(additionalInfo.getPhoneNumber());</span>
+        }
+
+<span class="nc" id="L159">        AccountStatus accountStatus = account.getAccountStatus();</span>
+<span class="nc bnc" id="L160" title="All 2 branches missed.">        if (accountStatus != null) {</span>
+<span class="nc" id="L161">            dto.setStatus(accountStatus.getStatus());</span>
+<span class="nc" id="L162">            dto.setLastAccessDate(accountStatus.getAccessDate());</span>
+        }
+
+<span class="nc" id="L165">        return dto;</span>
+    }
+
+    @Override
+    public boolean existEmail(String email) {
+<span class="nc" id="L170">        Long count = accountRepository.countEmail(email);</span>
+
+<span class="nc bnc" id="L172" title="All 4 branches missed.">        return count != null &amp;&amp; count &gt; 0;</span>
+    }
+
+    @Override
+    public boolean existId(String id) {
+<span class="nc" id="L177">        Long count = accountRepository.countId(id);</span>
+
+<span class="nc bnc" id="L179" title="All 4 branches missed.">        return count != null &amp;&amp; count &gt; 0;</span>
+    }
+
+    @Override
+    public ResponseAccountDto getAccountById(String id) {
+
+<span class="nc" id="L185">        Account result = accountRepository.getAccountById(id);</span>
+<span class="nc bnc" id="L186" title="All 2 branches missed.">        if(result!=null) {</span>
+<span class="nc" id="L187">            accessTimeCalculator(result);</span>
+<span class="nc" id="L188">            return convertToResponseAccountDto(result);</span>
+        }
+<span class="nc" id="L190">        else return null;</span>
+    }
+
+
+    @Transactional
+    public boolean existLoginAccount(String id, String password) {
+<span class="nc" id="L196">        ResponseAccountDto dto = getAccountById(id);</span>
+<span class="nc" id="L197">        setAccess(id,password);</span>
+<span class="nc bnc" id="L198" title="All 4 branches missed.">        return dto != null &amp;&amp; dto.getPassword().equals(password);</span>
+    }
+
+    // 해당 id와 password 를 가지고 있는 계정에 대한 접속일자 수정 메소드
+    @Transactional
+    public void setAccess(String id, String password) {
+<span class="nc" id="L204">        Account result = accountRepository.getAccountByIdAndPassword(id,password);</span>
+
+<span class="nc bnc" id="L206" title="All 2 branches missed.">        if (result != null) {</span>
+<span class="nc" id="L207">            AccountStatus status = result.getAccountStatus();</span>
+<span class="nc" id="L208">            status.setAccountStatus(LocalDate.now(),1);</span>
+        }
+<span class="nc" id="L210">    }</span>
+    //마지막 접속일자와 최근 접속일자를 계산하여 휴면계정 전환(3)
+    public void accessTimeCalculator(Account account) {
+<span class="nc bnc" id="L213" title="All 2 branches missed.">        if (account != null) {</span>
+<span class="nc" id="L214">            AccountStatus status = account.getAccountStatus();</span>
+<span class="nc bnc" id="L215" title="All 2 branches missed.">            if (status != null ) {</span>
+<span class="nc" id="L216">                LocalDate lastAccessDate = status.getAccessDate();</span>
+<span class="nc bnc" id="L217" title="All 2 branches missed.">                if (lastAccessDate != null) {</span>
+<span class="nc" id="L218">                    LocalDate currentDate = LocalDate.now();</span>
+<span class="nc" id="L219">                    long daysDifference = ChronoUnit.DAYS.between(lastAccessDate, currentDate);</span>
+
+<span class="nc bnc" id="L221" title="All 2 branches missed.">                    if (daysDifference &gt;= 365) {</span>
+<span class="nc" id="L222">                        status.saveStatus(3);</span>
+                    }
+                }
+            }
+        }
+<span class="nc" id="L227">    }</span>
+
+    public ResponseAccountDto updateAccessDate(Long seq) {
+<span class="nc" id="L230">        Account account = accountRepository.findById(seq)</span>
+<span class="nc" id="L231">                .orElse(null);</span>
+
+<span class="nc bnc" id="L233" title="All 2 branches missed.">        if (account != null) {</span>
+<span class="nc" id="L234">            AccountStatus status = account.getAccountStatus();</span>
+<span class="nc" id="L235">            status.saveAccessDate(LocalDate.now());</span>
+
+<span class="nc" id="L237">            return ResponseAccountDto.builder()</span>
+<span class="nc" id="L238">                    .accountSeq(account.getSeq())</span>
+<span class="nc" id="L239">                    .accountId(account.getId())</span>
+<span class="nc" id="L240">                    .password(account.getPassword())</span>
+<span class="nc" id="L241">                    .name(account.getName())</span>
+<span class="nc" id="L242">                    .email(account.getAdditionalInfo().getEmail())</span>
+<span class="nc" id="L243">                    .phoneNumber(account.getAdditionalInfo().getPhoneNumber())</span>
+<span class="nc" id="L244">                    .status(account.getAccountStatus().getStatus())</span>
+<span class="nc" id="L245">                    .lastAccessDate(LocalDate.now())</span>
+<span class="nc" id="L246">                    .build();</span>
+<span class="nc" id="L247">        } else return null;</span>
+    }
+
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.9.202303310957</span></div></body></html>

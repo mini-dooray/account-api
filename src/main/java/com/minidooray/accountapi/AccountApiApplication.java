@@ -10,11 +10,9 @@ import javax.persistence.EntityManagerFactory;
 
 
 @SpringBootApplication
-@ConfigurationPropertiesScan
-@EnableJpaRepositories(basePackages = "com.minidooray.accountapi.repository")
+//@ConfigurationPropertiesScan
+//@EnableJpaRepositories(basePackages = "com.minidooray.accountapi.repository")
 public class AccountApiApplication {
-	@Autowired
-	private EntityManagerFactory entityManagerFactory;
 
 	public static void main(String[] args) {
 		SpringApplication.run(AccountApiApplication.class, args);

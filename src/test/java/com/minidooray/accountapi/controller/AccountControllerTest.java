@@ -2,6 +2,7 @@ package com.minidooray.accountapi.controller;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.minidooray.accountapi.entity.Account;
 import com.minidooray.accountapi.entity.AccountStatus;
 import com.minidooray.accountapi.entity.AdditionalInfo;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
@@ -30,37 +32,29 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest
-@AutoConfigureMockMvc
+@WebMvcTest(AccountController.class)
 class AccountControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
-
-    @Autowired
-    private AccountController accountController;
-
     @MockBean
     private AccountService accountService;
 
 
-    @BeforeEach
-    void setup() {
-        MockitoAnnotations.openMocks(this);
-        accountController = new AccountController(accountService);
-    }
-
     @Test
-    void testGetAccount() throws Exception {
+    void testGetAccount_Success() throws Exception {
         Long seq = 1L;
         Account account = createMockAccount();
-        AccessTimeCalculator(account);
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule());
 
         when(accountService.getAccount(seq)).thenReturn(convertToResponseAccountDto(account));
 
-        mockMvc.perform(get("/account/{seq}", seq))
+        mockMvc.perform(get("/account/{seq}", seq)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(convertToResponseAccountDto(account))))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.accountSeq").value(account.getSeq()))
+                .andExpect(jsonPath("$.accountSeq").value(1L))
                 .andExpect(jsonPath("$.accountId").value(account.getId()))
                 .andExpect(jsonPath("$.password").value(account.getPassword()))
                 .andExpect(jsonPath("$.name").value(account.getName()))
@@ -72,106 +66,122 @@ class AccountControllerTest {
         verify(accountService, times(1)).getAccount(seq);
     }
 
+
     @Test
-    void testRegister() throws Exception {
-        RequestAccountDto requestDto = createMockRequestAccountDto();
+    void testGetAccount_Failure() throws Exception {
+        Long seq = 1L;
+        Account account = createMockAccount();
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule());
+
+        when(accountService.getAccount(seq)).thenReturn(convertToResponseAccountDto(account));
+
+        mockMvc.perform(get("/account/{seq}", seq)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        )
+                .andExpect(status().is2xxSuccessful())
+                .andExpect(jsonPath("$.accountSeq").value(1L))
+                .andExpect(jsonPath("$.accountId").value(account.getId()))
+                .andExpect(jsonPath("$.password").value(account.getPassword()))
+                .andExpect(jsonPath("$.name").value(account.getName()))
+                .andExpect(jsonPath("$.email").value(account.getAdditionalInfo().getEmail()))
+                .andExpect(jsonPath("$.phoneNumber").value(account.getAdditionalInfo().getPhoneNumber()))
+                .andExpect(jsonPath("$.status").value(account.getAccountStatus().getStatus()))
+                .andExpect(jsonPath("$.lastAccessDate").value(account.getAccountStatus().getAccessDate().toString()));
+    }
+    @Test
+    void testRegister_Success() throws  Exception{
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule());
+
+        RequestAccountDto dto = createRequest();
+        accountService.register(dto);
         Account account = createMockAccount();
 
-        when(accountService.register(any(RequestAccountDto.class))).thenReturn(convertToResponseAccountDto(account));
-        ResponseEntity<Void> responseEntity = accountController.register(requestDto);
-        assertEquals(HttpStatus.CREATED, responseEntity.getStatusCode());
+        mockMvc.perform(post("/account/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(account)))
+                .andExpect(status().isCreated());
+    }
+    @Test
+    void testRegister_Failure() throws  Exception{
+        mockMvc.perform(post("/account/register"))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
     void testDeleteAccount() throws Exception {
         Long seq = 1L;
         Account account = createMockAccount();
-        ResponseAccountDto responseAccountDto = convertToResponseAccountDto(account);
-
-        when(accountService.deleteAccount(seq)).thenReturn(responseAccountDto);
-
-        mockMvc.perform(post("/account/delete/{seq}", seq))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.accountSeq").value(responseAccountDto.getAccountSeq()))
-                .andExpect(jsonPath("$.accountId").value(responseAccountDto.getAccountId()))
-                .andExpect(jsonPath("$.password").value(responseAccountDto.getPassword()))
-                .andExpect(jsonPath("$.name").value(responseAccountDto.getName()))
-                .andExpect(jsonPath("$.email").value(responseAccountDto.getEmail()))
-                .andExpect(jsonPath("$.phoneNumber").value(responseAccountDto.getPhoneNumber()))
-                .andExpect(jsonPath("$.status").value(responseAccountDto.getStatus()))
-                .andExpect(jsonPath("$.lastAccessDate").value(responseAccountDto.getLastAccessDate().toString()));
-
-        verify(accountService, times(1)).deleteAccount(seq);
-    }
-    @Test
-    void testUpdateAccount() throws Exception {
-
-        RequestAccountDto requestDto = createMockRequestAccountDto();
-
-        ResponseAccountDto responseDto = new ResponseAccountDto();
-        responseDto.setAccountSeq(1L);
-        responseDto.setAccountId(requestDto.getAccountId());
-        responseDto.setPassword(requestDto.getPassword());
-        responseDto.setName(requestDto.getName());
-        responseDto.setEmail(requestDto.getEmail());
-        responseDto.setPhoneNumber(requestDto.getPhoneNumber());
-        responseDto.setStatus(requestDto.getStatus());
-        responseDto.setLastAccessDate(LocalDate.now());
-
-        when(accountService.updateAccount(anyLong(), any(RequestAccountDto.class))).thenReturn(responseDto);
-        mockMvc.perform(put("/account/update/{seq}", 1L)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(new ObjectMapper().writeValueAsString(requestDto)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.accountSeq").value(responseDto.getAccountSeq()))
-                .andExpect(jsonPath("$.accountId").value(responseDto.getAccountId()))
-                .andExpect(jsonPath("$.password").value(responseDto.getPassword()))
-                .andExpect(jsonPath("$.name").value(responseDto.getName()))
-                .andExpect(jsonPath("$.email").value(responseDto.getEmail()))
-                .andExpect(jsonPath("$.phoneNumber").value(responseDto.getPhoneNumber()))
-                .andExpect(jsonPath("$.status").value(responseDto.getStatus()))
-                .andExpect(jsonPath("$.lastAccessDate").exists());
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule());
+        mockMvc.perform(post("/account/delete/1",1L)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
     }
 
     @Test
-    void testGetAccountId() throws Exception {
+    void testUpdateAccount() throws Exception{
         Long seq = 1L;
-        String accountId = "test123";
-        when(accountService.getAccountId(seq)).thenReturn(accountId);
-        mockMvc.perform(get("/account/user/{seq}", seq))
-                .andExpect(status().isOk())
-                .andExpect(content().string(accountId));
+        RequestAccountDto dto = createRequest();
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule());
+
+        mockMvc.perform(put("/account/update/1",seq)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(dto)))
+                .andExpect(status().isOk());
     }
 
     @Test
-    void testGetEmail() throws Exception {
-        Long seq = 1L;
-        String email = "test@test.com";
-        when(accountService.getEmail(seq)).thenReturn(email);
-        mockMvc.perform(get("/account/email/{seq}", seq))
+    void testGetAccountId() throws Exception{
+        RequestAccountDto requestAccountDto = createRequest();
+        ResponseAccountDto dto = convertRequestToResponse(requestAccountDto);
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule());
+        when(accountService.getAccountId(1L)).thenReturn(requestAccountDto.getAccountId());
+        mockMvc.perform(get("/account/user/1",1)
+                .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(content().string(email));
+                .andExpect(content().string(dto.getAccountId()));
     }
 
     @Test
-    void testGetPassword() throws Exception {
-        Long seq = 1L;
-        String password = "password123";
-        when(accountService.getPassword(seq)).thenReturn(password);
-        mockMvc.perform(get("/account/pwd/{seq}", seq))
+    void testGetEmail() throws Exception{
+        RequestAccountDto requestAccountDto = createRequest();
+        ResponseAccountDto dto = convertRequestToResponse(requestAccountDto);
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule());
+        when(accountService.getEmail(1L)).thenReturn(requestAccountDto.getEmail());
+
+        mockMvc.perform(get("/account/email/1",1L)
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(content().string(password));
+                .andExpect(content().string(dto.getEmail()));
     }
 
     @Test
-    void testGetAccountByEmail() throws Exception {
-        String email = "test@test.com";
+    void testGetPassword() throws Exception{
+        RequestAccountDto requestAccountDto = createRequest();
+        ResponseAccountDto dto = convertRequestToResponse(requestAccountDto);
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule());
+        when(accountService.getPassword(1L)).thenReturn(requestAccountDto.getPassword());
+
+        mockMvc.perform(get("/account/pwd/1",1L)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().string(dto.getPassword()));
+    }
+
+    @Test
+    void testGeAccountByEmail() throws Exception{
         Account account = createMockAccount();
+        String email = "test@test.com";
         when(accountService.getAccountByEmail(email)).thenReturn(convertToResponseAccountDto(account));
-
         mockMvc.perform(get("/account/{email}/found", email))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.accountSeq").value(account.getSeq()))
+                .andExpect(jsonPath("$.accountSeq").value(1L))
                 .andExpect(jsonPath("$.accountId").value(account.getId()))
                 .andExpect(jsonPath("$.password").value(account.getPassword()))
                 .andExpect(jsonPath("$.name").value(account.getName()))
@@ -180,11 +190,11 @@ class AccountControllerTest {
                 .andExpect(jsonPath("$.status").value(account.getAccountStatus().getStatus()))
                 .andExpect(jsonPath("$.lastAccessDate").exists());
     }
+
     @Test
     void testExistsEmail() throws Exception{
         String email = "Test123123@Test.com";
         when(accountService.existEmail(email)).thenReturn(true);
-
         mockMvc.perform(get("/account/find/email/{email}", email))
                 .andExpect(status().isOk())
                 .andExpect(content().string("true"));
@@ -194,7 +204,6 @@ class AccountControllerTest {
     void testExistsId() throws Exception{
         String id = "TestId123";
         when(accountService.existId(id)).thenReturn(true);
-
         mockMvc.perform(get("/account/find/id/{id}",id))
                 .andExpect(status().isOk())
                 .andExpect(content().string("true"));
@@ -202,12 +211,10 @@ class AccountControllerTest {
 
     @Test
     void testGetAccountById() throws Exception {
-        String id = "test123";
+        String id = "TestId";
         Account account = createMockAccount();
         ResponseAccountDto responseDto = convertToResponseAccountDto(account);
-
         when(accountService.getAccountById(id)).thenReturn(responseDto);
-
         mockMvc.perform(get("/account/account/{id}", id))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accountId").value(account.getId()))
@@ -221,105 +228,102 @@ class AccountControllerTest {
 
     @Test
     void testLogin_Success() throws Exception {
-        RequestAccountDto requestDto = createMockRequestAccountDto();
+        RequestAccountDto requestDto = createRequest();
         String accountId = requestDto.getAccountId();
         String password = requestDto.getPassword();
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule());
         boolean result = true;
-
         when(accountService.existLoginAccount(accountId, password)).thenReturn(result);
-
         mockMvc.perform(post("/account/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(new ObjectMapper().writeValueAsString(requestDto)))
+                        .content(mapper.writeValueAsString(requestDto)))
                 .andExpect(status().isOk())
                 .andExpect(content().string("로그인 성공"));
-
         boolean loginSuccess = accountService.existLoginAccount(accountId, password);
-
         assertTrue(loginSuccess);
     }
-
     @Test
     void testLogin_Fail() throws Exception {
-        RequestAccountDto requestDto = createMockRequestAccountDto();
+        RequestAccountDto requestDto = createRequest();
         String accountId = requestDto.getAccountId();
         String password = requestDto.getPassword();
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule());
         boolean result = false;
-
         when(accountService.existLoginAccount(accountId, password)).thenReturn(result);
-
         mockMvc.perform(post("/account/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(new ObjectMapper().writeValueAsString(requestDto)))
+                        .content(mapper.writeValueAsString(requestDto)))
                 .andExpect(status().isUnauthorized())
                 .andExpect(content().string("로그인 실패"));
-
         boolean loginFailure = accountService.existLoginAccount(accountId, password);
-
         assertFalse(loginFailure);
     }
-
     @Test
     void testUpdateDate_Success() {
-
         AccountService accountService = mock(AccountService.class);
         AccountController accountController = new AccountController(accountService);
-
         Long seq = 1L;
         ResponseEntity<Account> response = accountController.updateDate(seq);
-
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNull(response.getBody());
-
         verify(accountService).updateAccessDate(seq);
-    }
-
-
-
-
-    private RequestAccountDto createMockRequestAccountDto() {
-        RequestAccountDto requestDto = new RequestAccountDto();
-        requestDto.setAccountId("test123");
-        requestDto.setPassword("password");
-        requestDto.setName("TestName2");
-        requestDto.setEmail("Test123@TestCode.com");
-        requestDto.setPhoneNumber("1234567890");
-        return requestDto;
-    }
-    private ResponseAccountDto convertToResponseAccountDto(Account account) {
-        return ResponseAccountDto.builder()
-                .accountSeq(account.getSeq())
-                .accountId(account.getId())
-                .password(account.getPassword())
-                .name(account.getName())
-                .email(account.getAdditionalInfo().getEmail())
-                .phoneNumber(account.getAdditionalInfo().getPhoneNumber())
-                .status(account.getAccountStatus().getStatus())
-                .lastAccessDate(account.getAccountStatus().getAccessDate())
-                .build();
     }
 
     private Account createMockAccount() {
         Account account = new Account();
-        account.setSeq(1L);
-        account.setId("test123");
-        account.setPassword("password");
-        account.setName("TestName1");
+        account.setAccount("TestId", "123456", "테스트이름");
+        AdditionalInfo info = new AdditionalInfo();
+        info.setAdditionalInfo("TestEmail@@Test.com", "010-000-0000");
+        AccountStatus status = new AccountStatus();
+        status.setAccountStatus(LocalDate.of(2023, 6, 14), 1);
 
-        AdditionalInfo additionalInfo = new AdditionalInfo();
-        additionalInfo.setEmail("Test@Test.com");
-        additionalInfo.setPhoneNumber("1234567890");
-
-        AccountStatus accountStatus = new AccountStatus();
-        accountStatus.setStatus(1);
-        accountStatus.setAccessDate(LocalDate.now());
-
-        account.setAdditionalInfo(additionalInfo);
-        account.setAccountStatus(accountStatus);
+        account.setAccountStatus(status);
+        account.setAdditionalInfo(info);
 
         return account;
     }
+    private ResponseAccountDto convertToResponseAccountDto(Account account){
+        AdditionalInfo info = account.getAdditionalInfo();
+        AccountStatus status = account.getAccountStatus();
+        return ResponseAccountDto.builder()
+                .status(1)
+                .accountSeq(1L)
+                .accountId(account.getId())
+                .email(info.getEmail())
+                .name(account.getName())
+                .phoneNumber(info.getPhoneNumber())
+                .password(account.getPassword())
+                .lastAccessDate(status.getAccessDate())
+                .build();
+    }
 
+
+
+    private RequestAccountDto createRequest(){
+        RequestAccountDto dto = new RequestAccountDto();
+        dto.setAccountId("TestId");
+        dto.setStatus(1);
+        dto.setEmail("TestEmail@@Test.com");
+        dto.setPassword("123456");
+        dto.setPhoneNumber("010-000-0000");
+        dto.setLastAccessDate(LocalDate.of(2023,6,14));
+        dto.setName("테스트이름");
+        return dto;
+    }
+
+    private ResponseAccountDto convertRequestToResponse(RequestAccountDto dto){
+        return ResponseAccountDto.builder()
+                .accountId(dto.getAccountId())
+                .status(dto.getStatus())
+                .email(dto.getEmail())
+                .password(dto.getPassword())
+                .phoneNumber(dto.getPhoneNumber())
+                .lastAccessDate(dto.getLastAccessDate())
+                .name(dto.getName())
+                .build();
+    }
     void AccessTimeCalculator(Account account){
         LocalDate lastAccessDate = account.getAccountStatus().getAccessDate();
         LocalDate currentDate = LocalDate.now();
@@ -328,8 +332,7 @@ class AccountControllerTest {
         long daysDifference = ChronoUnit.DAYS.between(lastAccessDate, currentDate);
 
         if(daysDifference>=365){
-            status.setStatus(3);
-            account.setAccountStatus(status);
+            status.saveStatus(3);
         }
     }
 

@@ -11,7 +11,7 @@ public interface AccountService {
 
     ResponseAccountDto getAccount(Long seq);
 
-    ResponseAccountDto deleteAccount(Long seq);
+    void deleteAccount(Long seq);
 
     ResponseAccountDto register(RequestAccountDto requestAccountDto);
 
